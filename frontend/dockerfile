@@ -1,0 +1,16 @@
+# frontend/Dockerfile
+FROM node:18
+
+WORKDIR /app
+
+# 의존성 설치
+COPY package*.json ./
+RUN npm install
+RUN npm install web-vitals serve -g
+
+# 소스 복사 및 빌드
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+CMD ["serve", "-s", "build", "-l", "3000"]

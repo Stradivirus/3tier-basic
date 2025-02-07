@@ -1,0 +1,71 @@
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - react
+      - django
+      - fastapi
+
+  react:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+
+  django:
+    build: 
+      context: ./backend/django_app
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - DJANGO_SECRET_KEY=your-secret-key
+      - DJANGO_DEBUG=0
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+    depends_on:
+      - mariadb
+      - redis
+
+  fastapi:
+    build:
+      context: ./backend/fastapi_app
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DEBUG=0
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:latest
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=mydb
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mariadb_data:
+  redis_data:
+
+networks:
+  default:
+    driver: bridge
